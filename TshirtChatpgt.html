@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Shop Homepage</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    nav {
+        background-color: #333;
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+        position: relative; /* Position relative for the button */
+    }
+    nav a {
+        color: #fff;
+        text-decoration: none;
+        margin: 0 10px;
+    }
+    nav a:hover {
+        text-decoration: underline;
+    }
+    .content {
+        padding: 20px;
+        text-align: center;
+    }
+    .item-container {
+        display: inline-block;
+        margin: 20px;
+        text-align: left;
+    }
+    .item-container img {
+        width: 200px;
+        height: auto;
+        border-radius: 8px;
+    }
+    .buy-button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 16px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .buy-button:hover {
+        background-color: #45a049;
+    }
+    .buy-button[disabled] {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+    /* Popup styling */
+    .popup {
+        display: none; /* Hide popup by default */
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #f1f1f1;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        z-index: 999;
+    }
+    .popup-content {
+        text-align: center;
+    }
+    .popup-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .home-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 16px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .home-button:hover {
+        background-color: #45a049;
+    }
+</style>
+</head>
+<body>
+<nav>
+    <a href="index.html">Home</a>
+    <button class="home-button" onclick="goToHomePage()">Go to Home Page</button>
+    <!-- You can add more navigation links here if needed -->
+</nav>
+
+<div class="content">
+    <h1>Welcome to Our Shop</h1>
+    <p>Choose an item to buy:</p>
+
+    <div class="item-container">
+        <img src="item1.jpg" alt="Item 1">
+        <p>Item 1 - $10 (Stock: <span id="stock1">5</span>)</p>
+        <button class="buy-button" id="btn-item1" onclick="addToCart('Item 1', 10, 0)">Add to Cart</button>
+    </div>
+
+    <div class="item-container">
+        <img src="item2.jpg" alt="Item 2">
+        <p>Item 2 - $15 (Stock: <span id="stock2">5</span>)</p>
+        <button class="buy-button" id="btn-item2" onclick="addToCart('Item 2', 15, 1)">Add to Cart</button>
+    </div>
+
+    <div class="item-container">
+        <img src="item3.jpg" alt="Item 3">
+        <p>Item 3 - $20 (Stock: <span id="stock3">5</span>)</p>
+        <button class="buy-button" id="btn-item3" onclick="addToCart('Item 3', 20, 2)">Add to Cart</button>
+    </div>
+</div>
+
+<!-- Popup markup -->
+<div id="popup" class="popup" draggable="true" ondragstart="drag(event)">
+    <div class="popup-content">
+        <span class="popup-close" onclick="closePopup()">&times;</span>
+        <h2>Items in Cart</h2>
+        <div id="purchased-items"></div>
+        <p id="total-price">Total: $0</p>
+        <button onclick="completePurchase()">Complete Purchase</button>
+    </div>
+</div>
+
+<script>
+    var purchasedItems = [];
+    var itemStock = { 'stock1': 5, 'stock2': 5, 'stock3': 5 };
+
+    function addToCart(itemName, price, index) {
+        var stockId = 'stock' + (index + 1);
+        if (itemStock[stockId] > 0) {
+            purchasedItems.push({ name: itemName, price: price, index: index });
+            itemStock[stockId]--;
+            document.getElementById(stockId).innerText = itemStock[stockId];
+            updatePopup();
+        } else {
+            alert("Sorry, this item is out of stock.");
+        }
+        updateAddToCartButtons(); // Update button states
+    }
+
+    function updateAddToCartButtons() {
+        for (var i = 1; i <= Object.keys(itemStock).length; i++) {
+            var stockId = 'stock' + i;
+            var buttonId = 'btn-item' + i;
+            var button = document.getElementById(buttonId);
+            if (itemStock[stockId] <= 0) {
+                button.disabled = true;
+            } else {
+                button.disabled = false;
+            }
+        }
+    }
+
+    function updatePopup() {
+        var popup = document.getElementById("popup");
+        var purchasedItemsList = document.getElementById("purchased-items");
+        var totalPrice = 0;
+        purchasedItemsList.innerHTML = "";
+        purchasedItems.forEach(function(item, index) {
+            purchasedItemsList.innerHTML += "<p>" + item.name + " - $" + item.price + " <button onclick='removeItem(" + index + ")'>Remove</button></p>";
+            totalPrice += item.price;
+        });
+        document.getElementById("total-price").innerText = "Total: $" + totalPrice;
+        popup.style.display = "block";
+    }
+
+    function closePopup() {
+        var popup = document.getElementById("popup");
+        popup.style.display = "none";
+    }
+
+    function removeItem(index) {
+        var removedItem = purchasedItems.splice(index, 1)[0];
+        var stockId = 'stock' + (removedItem.index + 1);
+        itemStock[stockId]++;
+        document.getElementById(stockId).innerText = itemStock[stockId];
+        updatePopup();
+        updateAddToCartButtons(); // Update button states
+    }
+
+    var offsetX, offsetY;
+
+    function drag(event) {
+        offsetX = event.clientX - event.target.getBoundingClientRect().left;
+        offsetY = event.clientY - event.target.getBoundingClientRect().top;
+        document.addEventListener("mousemove", move);
+        document.addEventListener("mouseup", stop);
+    }
+
+    function move(event) {
+        var popup = document.getElementById("popup");
+        var x = event.clientX - offsetX;
+        var y = event.clientY - offsetY;
+        popup.style.left = x + "px";
+        popup.style.top = y + "px";
+    }
+
+    function stop() {
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", stop);
+    }
+
+    function completePurchase() {
+        purchasedItems = [];
+        updatePopup();
+        updateAddToCartButtons();
+    }
+
+    function goToHomePage() {
+        window.location.href = "homepageChatgpt.html"; // Replace "index.html" with your actual homepage URL
+    }
+</script>
+
+</body>
+</html>
